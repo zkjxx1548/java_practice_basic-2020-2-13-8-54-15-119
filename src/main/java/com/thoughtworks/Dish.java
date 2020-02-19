@@ -6,6 +6,9 @@ public class Dish {
   private String name;
   private double price;
 
+  public Dish() {
+  }
+
   public Dish(String id, String name, double price) {
     this.id = id;
     this.name = name;
