@@ -1,5 +1,6 @@
 package com.thoughtworks;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class HalfReduction implements Reduction {
@@ -21,7 +22,7 @@ public class HalfReduction implements Reduction {
     public String printReduction(List<String> items, int price) {
         String halfItemNames = "";
         List<String> list = DataProvider.getHalfDishIds();
-        List<String> listHalfNames = DataProvider.getHalfDishIds();
+        List<String> listHalfNames = new ArrayList<>();
         for (int i = 0; i < items.size(); i++) {
             if (list.contains(items.get(i))) {
                 Dish dish = Parse.getItemDish(items.get(i));

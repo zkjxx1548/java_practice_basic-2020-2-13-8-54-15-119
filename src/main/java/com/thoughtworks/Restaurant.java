@@ -8,15 +8,10 @@ public class Restaurant {
   public String bestCharge(String selectedItems) {
     String res = "";
     //提取点菜信息
-    String[] arrSelect = selectedItems.split(",");
-    List<String> listId = new ArrayList<>();
-    List<Integer> listCount = new ArrayList<>();
-    for (int i = 0; i < arrSelect.length; i++) {
-      String regex = " x ";
-      String[] itemIdAndCount = arrSelect[i].split(regex);
-      listId.add(itemIdAndCount[0]);
-      listCount.add(Integer.parseInt(itemIdAndCount[1]));
-    }
+    Parse parse = new Parse();
+    parse.setIdsAndCounts(selectedItems);
+    List<String> listId = parse.getSelectIds();
+    List<Integer> listCount = parse.getSelectCounts();
 
     //订餐商品展示
     res += printSelectDishes(listId, listCount);
