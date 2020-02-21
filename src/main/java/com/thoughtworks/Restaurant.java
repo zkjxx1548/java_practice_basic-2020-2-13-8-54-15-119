@@ -1,78 +1,84 @@
 package com.thoughtworks;
 
-import java.util.ArrayList;
+import com.thoughtworks.Promotion.FullReduction;
+import com.thoughtworks.Promotion.HalfReduction;
+import com.thoughtworks.data.Dish;
+import com.thoughtworks.order.Order;
+import com.thoughtworks.order.OrderItem;
+
 import java.util.List;
 
 public class Restaurant {
+  private List<Dish> dishes;
+  private List<String> halfIds;
+
+  public Restaurant(List<Dish> dishes, List<String> halfIds) {
+    this.dishes = dishes;
+    this.halfIds = halfIds;
+  }
+
+  public List<Dish> getDishes() {
+    return dishes;
+  }
+
+  public List<String> getHalfIds() {
+    return halfIds;
+  }
 
   public String bestCharge(String selectedItems) {
-    String res = "";
     //提取点菜信息
-    Parse parse = new Parse();
-    parse.setIdsAndCounts(selectedItems);
-    List<String> listId = parse.getSelectIds();
-    List<Integer> listCount = parse.getSelectCounts();
+    Order order = new Order(Parse.parseOrder(selectedItems, this.dishes));
 
     //订餐商品展示
-    res += printSelectDishes(listId, listCount);
+    StringBuilder sb = new StringBuilder(printSelectDishes(order));
 
-    //打印优惠
-    int allPrice = getAllPrice(listId, listCount);
+    //判断优惠类型
+    int allPrice = (int) order.getAllPrice();
     FullReduction fullReduction = new FullReduction();
-    int fullPrice = fullReduction.getReduction(listId, listCount, allPrice);
+    int fullPrice = fullReduction.getReduction(order);
     HalfReduction halfReduction = new HalfReduction();
-    int halfPrice = halfReduction.getReduction(listId, listCount, allPrice);
-    res += printSelectReduction(listId, listCount, fullReduction, halfReduction, allPrice, fullPrice, halfPrice);
-
-    //打印总计
-    res += printEndPrice(allPrice, fullPrice, halfPrice);
-    return res;
-  }
-
-  public static int getAllPrice(List<String> items, List<Integer> counts) {
-    double allPrice = 0;
-    for (int i = 0; i < items.size(); i++) {
-      Dish dish = Parse.getItemDish(items.get(i));
-      allPrice += dish.getPrice() * counts.get(i);
-    }
-    return (int) allPrice;
-  }
-
-  public static String printSelectDishes(List<String> items, List<Integer> counts) {
-    String res = "============= 订餐明细 =============\n";
-    for (int i = 0; i < items.size(); i++) {
-      Dish dish = Parse.getItemDish(items.get(i));
-      res += dish.getName() + " x " + counts.get(i) + " = " + (int) (counts.get(i) * dish.getPrice()) + "元\n";
-    }
-    return res;
-  }
-
-  public static String printSelectReduction(List<String> items, List<Integer> counts, FullReduction fullReduction, HalfReduction halfReduction, int allPrice, int fullPrice, int halfPrice) {
-    String res = "-----------------------------------\n";
-    if (fullPrice != 0 || halfPrice != 0) {
-      res += "使用优惠:\n";
-      if (fullPrice >= halfPrice) {
-        res += fullReduction.printReduction(items, fullPrice);
-      } else {
-        res += halfReduction.printReduction(items, halfPrice);
-      }
-      return res;
-    }
-    return "";
-  }
-
-  public static String printEndPrice(int allPrice, int fullPrice, int halfPrice) {
+    int halfPrice = halfReduction.getReduction(order);
     int price = allPrice;
     if (fullPrice != 0 || halfPrice != 0) {
+      String reduction = "";
       if (fullPrice >= halfPrice) {
-        price = allPrice - fullPrice;
+        reduction = fullReduction.printReduction(order);
+        price = price - fullPrice;
       } else {
-        price = allPrice - halfPrice;
+        reduction = halfReduction.printReduction(order);
+        price = price - halfPrice;
       }
+      //打印优惠信息
+      sb.append(printSelectReduction(reduction));
     }
-    String res = "-----------------------------------\n";
-    res += String.format("总计：%d元\n", price);
-    res += "===================================";
-    return res;
+    order.setPrice(price);
+
+    //打印总计
+    sb.append(printEndPrice(order));
+    return sb.toString();
+  }
+
+  public static String printSelectDishes(Order order) {
+    StringBuilder res = new StringBuilder("============= 订餐明细 =============\n");
+    List<OrderItem> orderItems = order.getOrderItems();
+    for (OrderItem orderItem : orderItems) {
+      Dish dish = orderItem.getDish();
+      res.append(dish.getName()).append(" x ").append(orderItem.getCount()).append(" = ").append((int) (orderItem.getSubtotal())).append("元\n");
+    }
+    return res.toString();
+  }
+
+  public static String printSelectReduction(String reduction) {
+    StringBuilder sb = new StringBuilder("-----------------------------------\n");
+    sb.append("使用优惠:\n");
+    sb.append(reduction);
+    return sb.toString();
+  }
+
+  public static String printEndPrice(Order order) {
+    StringBuilder sb = new StringBuilder("-----------------------------------\n");
+    sb.append(String.format("总计：%d元\n", order.getPrice()));
+    sb.append("===================================");
+    return sb.toString();
   }
 }
